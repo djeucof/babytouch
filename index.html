@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Baby Touch 👶🏼🫧</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #f7f9fc;
+      touch-action: manipulation;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    .hint {
+      position: absolute;
+      bottom: 24px;
+      width: 100%;
+      text-align: center;
+      color: #b0bec5;
+      font-size: 16px;
+      pointer-events: none;
+      letter-spacing: 0.5px;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="hint">Tap anywhere</div>
+  <canvas id="gameCanvas"></canvas>
+  <script>
+    // Initialize canvas element & rendering context
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let items = [];
+
+    // Resize canvas to fill the entire viewport
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Soothing pastel color palette suitable for babies
+    const palette = ['#FFB5A7', '#FCD5CE', '#F8EDEB', '#F9DCC4', '#FEC89A', '#D8E2DC', '#B5E2FA', '#EDF2F4'];
+
+    // Web Audio API setup for sound synthesis
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    // Plays a synthesized note based on the Y-touch position (Lower Y = higher pitch)
+    function playToneForPosition(y, height) {
+      if (!audioCtx) audioCtx = new AudioContext();
+      
+      // Calculate tone frequency relative to vertical touch position (150 Hz to 880 Hz)
+      const minFreq = 150;
+      const maxFreq = 880;
+      const freq = maxFreq - (y / height) * (maxFreq - minFreq);
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      // Pure sine wave for smooth audio output
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      
+      // Gentle gain ramp-down to prevent abrupt cutoff clicks
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.2);
+    }
+
+    // Add new interactive touch bubble
+    function addItem(x, y) {
+      const color = palette[Math.floor(Math.random() * palette.length)];
+      items.push({ x, y, radius: 10, maxRadius: 110, color, opacity: 1 });
+      playToneForPosition(y, canvas.height);
+    }
+
+    // Handle touch & click events
+    function handleInput(e) {
+      e.preventDefault();
+      const touches = e.changedTouches || [e];
+      for (let i = 0; i < touches.length; i++) {
+        addItem(touches[i].clientX, touches[i].clientY);
+      }
+    }
+
+    canvas.addEventListener('pointerdown', handleInput);
+
+    // Main animation loop
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      for (let i = items.length - 1; i >= 0; i--) {
+        let it = items[i];
+        
+        // Expand circle and decay opacity over time
+        it.radius += (it.maxRadius - it.radius) * 0.08;
+        it.opacity -= 0.01;
+
+        if (it.opacity <= 0) {
+          items.splice(i, 1);
+          continue;
+        }
+
+        // Render circle on canvas
+        ctx.save();
+        ctx.globalAlpha = it.opacity;
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, it.radius, 0, Math.PI * 2);
+        ctx.fillStyle = it.color;
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>

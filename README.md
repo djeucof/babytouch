@@ -1,7 +1,7 @@
 # 👶🏼🫧 Baby Touch 👉🏻🫧
 Minimalist sensory touch web game for babies with adaptive Web Audio &amp; HTML5 Canvas. Built for calm, anti-overstimulation UX.
 
-✨[ **Play Baby Touch Live**](https://djeucof.github.io/baby-touch/) ✨
+✨[ **Play Baby Touch Live**](https://djeucof.github.io/babytouch/) ✨
 
 ---
 ## 🤷‍♂️ What is this?
